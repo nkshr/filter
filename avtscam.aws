@@ -1,0 +1,74 @@
+#!/bin/sh
+
+REP=yes
+LOG=no
+WIN=yes
+CH1=no
+CH2=yes
+
+for i in {0..2}
+do
+    str1="/media/ubuntu/ssd"
+    fpath=$str1$i
+    if [ -e $fpath ]; then
+	echo "$fpath exist"
+    fi
+done
+
+
+channel imgr img1
+channel imgr img2
+
+filter avtstereo cam -i -o img1 img2
+fset cam host1 172.18.2.10
+fset cam host2 172.18.3.10
+fset cam PixelFormat1 Mono8
+fset cam ReverseY1 no
+fset cam ReverseX1 yes
+fset cam PixelFormat2 Mono8
+fset cam ReverseY2 no
+fset cam ReverseX2 yes
+fset cam FrameStartTriggerMode Software
+fset cam Ttrig 2000000
+
+if [ $LOG = "yes" ]; then
+    fset cam ochlog y
+fi
+
+if [ $REP = "yes" ]; then
+    fset cam ochrep y
+    online no
+fi
+
+fset cam fochlogpath "/home/ubuntu/fpath.txt"
+fset cam fjochlog "/home/ubuntu/journal.txt" 
+
+if [ $WIN = "yes" ]; then
+    filter glstvw win -i img1 img2 -o 
+    fset win width 640 height 480
+fi
+
+if [ $CH1 = "yes" ]; then
+    filter glimv wch1 -i img1 -o
+    fset wch1 width 640 height 480
+fi
+
+if [ $CH2 = "yes" ]; then
+    filter glimv wch2 -i img2 -o
+    fset wch2 width 640 height 480
+fi
+
+online no
+#filter tsync tsync -i -o
+#fset tsync host_svr 172.18.4.222
+#fset tsync port_svr 20200
+
+cyc 0.1 
+#go 946689890
+#go 946689094
+#go 144496742 
+#0000000
+#go 1446013959
+#go 946685439
+#go 946685794
+go 144607867
