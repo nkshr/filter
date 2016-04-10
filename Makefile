@@ -4,6 +4,14 @@ CC	= g++
 #linker
 LD	= ld
 
+#gear library
+GEAR = y
+
+ifeq ($(GEAR),y)
+	INC_GEAR_DIR = /home/ubuntu/GitHub/gear
+	LIB_GEAR_DIR = /home/ubuntu/GitHub/gear
+endif
+
 #debug option (y: build as debug binary)
 #DEBUG = y
 
@@ -32,7 +40,6 @@ AVT_CAM = y
 UVC_CAM = y
 FWINDOW = n
 GLFW_WINDOW = y
-GEAR = y
 
 #directory settings 
 CUR_DIR = $(shell pwd)
@@ -48,22 +55,17 @@ LIB_PVAPI_DIR = $(CUR_DIR)/PvAPI/lib
 INC_GLFW_DIR = $(CUR_DIR)/GLFW/include
 LIB_GLFW_DIR = $(CUR_DIR)/GLFW/lib
 
-ifeq ($(GEAR),y)
-	INC_GEAR_DIR = /home/ubuntu/GitHub/gear
-	LIB_GEAR_DIR = /home/ubuntu/GitHub/gear
-endif
-
 # module listing 
 # listing filter module
 FILTER = f_base f_nmea f_cam f_camcalib f_imgshk f_misc \
 	f_shioji f_ship_detector f_stabilizer f_com f_uvc_cam f_event f_fep01 f_time \
-	f_aws1_nmea_sw f_aws1_ctrl f_ahrs f_trckr
+	f_aws1_nmea_sw f_aws1_ctrl f_ahrs f_aws1_ap f_map f_trckr f_trckr_ui
 
 # listing channel module
-CHANNEL = ch_base ch_image
+CHANNEL = ch_base ch_image ch_aws1_ctrl
 
 # listing utility module
-UTIL =  c_clock c_imgalign c_nmeadec c_ship aws_coord aws_serial aws_sock aws_vobj aws_vlib aws_stdlib
+UTIL =  c_clock c_imgalign aws_nmea aws_nmea_gps aws_nmea_ais c_ship aws_coord aws_serial aws_sock aws_vobj aws_vlib aws_stdlib
 
 # for x86 CPU architecture
 ifeq ($(CPU), x86)
@@ -140,16 +142,19 @@ FSRCS = $(addsuffix .cpp,$(FILTER))
 CSRCS = $(addsuffix .cpp,$(CHANNEL))
 USRCS = $(addsuffix .cpp,$(UTIL))
 SRCS = command.cpp c_aws.cpp aws.cpp factory.cpp
+FDEPS = $(addsuffix .d,$(FILTER))
+CDEPS = $(addsuffix .d,$(CHANNEL))
+UDEPS = $(addsuffix .d,$(UTIL))
+DEPS = command.d c_aws.d aws.d factroy.d
 
 EXE = aws
 FLAGS = -std=gnu++0x $(DEFS) $(INC) $(OFLAGS) $(DFLAGS)
 
-
 .PHONY: rcmd
 all:
 	make rcmd
+	touch c_aws.cpp
 	make aws
-
 rcmd: 
 	cd $(RCMD_DIR); make CC="$(CC)"; 
 
@@ -161,20 +166,23 @@ aws: $(OBJS) filter channel util
 .PHONY: util
 
 filter: 
-	cd $(FDIR); make CC="$(CC)" FLAGS="$(FLAGS)" OBJS="$(FOBJS)"	
+	cd $(FDIR); make CC="$(CC)" FLAGS="$(FLAGS)" OBJS="$(FOBJS)" DEPS="$(FDEPS)"
 
 channel:
-	cd $(CDIR); make CC="$(CC)" FLAGS="$(FLAGS)" OBJS="$(COBJS)"
+	cd $(CDIR); make CC="$(CC)" FLAGS="$(FLAGS)" OBJS="$(COBJS)" DEPS="$(CDEPS)"
 
 util:
-	cd $(UDIR); make CC="$(CC)" FLAGS="$(FLAGS)" OBJS="$(UOBJS)"	
+	cd $(UDIR); make CC="$(CC)" FLAGS="$(FLAGS)" OBJS="$(UOBJS)" DEPS="$(UDEPS)"
+
+-include *.d
 
 .cpp.o:
-	$(CC) $(FLAGS) -c $< -o $@
+	$(CC) $(FLAGS) -c -MMD -MP $< -o $@
 
 .PHONY: clean
 clean:
 	rm -f *.o $(FDIR)/*.o $(CDIR)/*.o $(UDIR)/*.o
+	rm -f *.d $(FDIR)/*.d $(CDIR)/*.d $(UDIR)/*.d	
 	rm -f aws
 	cd $(RCMD_DIR); make clean
 

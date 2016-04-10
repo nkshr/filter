@@ -54,7 +54,10 @@ using namespace cv;
 #include "channel/ch_ais.h"
 #include "channel/ch_navdat.h"
 #include "channel/ch_state.h"
-
+#include "channel/ch_aws1_ctrl.h"
+#include "channel/ch_map.h"
+#include "channel/ch_obj.h"
+#include "channel/ch_wp.h"
 
 // Initialization function. 
 // This function is called at the begining of the aws process start. If you
@@ -79,6 +82,7 @@ void ch_base::uninit()
 // the code "register_factory<class>("class string").
 void ch_base::register_factory()
 {
+  register_factory<ch_sample>("sample");
 	register_factory<ch_image_cln>("imgc");
 	register_factory<ch_image_ref>("imgr");
 	register_factory<ch_pvt>("pvt");
@@ -87,6 +91,7 @@ void ch_base::register_factory()
 	register_factory<ch_vector<s_binary_message> >("bmsg");
 	register_factory<ch_navdat>("ship");
 	register_factory<ch_ship_ctrl>("ship_ctrl");
+	register_factory<ch_aws1_ctrl>("aws1_ctrl");
 	register_factory<ch_vector<Rect>>("vrect");
 	register_factory<ch_vector<c_track_obj>>("trck");
 	register_factory<ch_ptz>("ptz");
@@ -97,6 +102,9 @@ void ch_base::register_factory()
 	register_factory<ch_ring<char, 4096> >("crbuf4k");
 	register_factory<ch_ring<char, 8192> >("crbuf8k");
 	register_factory<ch_state>("state");
+	register_factory<ch_map>("map");
+	register_factory<ch_obj>("obj");
+	register_factory<ch_wp>("wp");
 }
 
 ////////////////////////////////////////////////// setting up filter factory
@@ -148,12 +156,17 @@ void ch_base::register_factory()
 #include "filter/f_event.h"
 #include "filter/f_fep01.h"
 #include "filter/f_ahrs.h"
+#include "filter/f_map.h"
 #include "filter/f_time.h"
+#include "filter/f_aws1_ap.h"
 
+//additional code
 #include <gear_transformation.h>
 #include <gear_img_align.h>
 using namespace gear;
 #include "filter/f_trckr.h"
+#include "filter/f_trckr_ui.h"
+
 // Initialization function. 
 // This function is called at the begining of the aws process start. If you
 // need to initialize global and static data structure please insert your 
@@ -247,7 +260,11 @@ void f_base::register_factory()
 	register_factory<f_glfw_stereo_view>("glstvw");
 	register_factory<f_glfw_imview>("glimv");
 	register_factory<f_aws1_ui>("aws1_ui");
+#ifdef _DEBUG
+	register_factory<f_aws1_ui_test>("aws1_ui_test");
 #endif
+#endif
+
 	// video sources
 #ifdef SANYO_HD5400
 	register_factory<f_netcam>("hd5400");
@@ -284,6 +301,9 @@ void f_base::register_factory()
 	register_factory<f_time>("tsync");
 
 	register_factory<f_ahrs>("ahrs");
+	register_factory<f_aws1_ap>("aws1_ap");
 
+	//additional code
 	register_factory<f_trckr>("trckr");
+	register_factory<f_trckr_ui>("trckr_ui");
 }
